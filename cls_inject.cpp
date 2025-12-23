@@ -14,10 +14,26 @@ using namespace std;
 
 const char* MCC_PROC_STR = "mcc-win64-shipping.exe";
 const char* MCC_ALT_PROC_STR = "MCC-Win64-Shipping.exe";
-const char* INJECTED_MODULE_NAME = "NetHook.dll";
-const char* INJECTED_MODULE_PATH = "D:\\Projects\\VS\\NetHookInject\\x64\\Release\\NetHook.dll";
+const char* INJECTED_MODULE_NAME = "cls_client.dll";
+const char* INJECTED_MODULE_PATH = "D:\\Projects\\VS\\CLS\\inject\\cls_client\\cls_client\\x64\\Debug\\cls_client.dll";
+
+const unsigned long long d3d11_checksum = 0xa0a241b9b7d37785ull;
+const unsigned long long dxgi_checksum = 0xe709c1ef94866bc4ull;
 
 #include <string>
+
+unsigned long long calculateChecksum(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "Unable to open file for checksum'ing: " << filename << std::endl;
+        return 0;
+    }
+    unsigned long long checksum = 0;
+    unsigned long long buffer;
+    while (file.read((char*)(&buffer), 8))
+        checksum ^= buffer;
+    return checksum;
+}
 
 HANDLE find_process(const char* target_process, HMODULE* previous_injection) {
 
@@ -51,6 +67,25 @@ HANDLE find_process(const char* target_process, HMODULE* previous_injection) {
                 GetModuleBaseNameA(process_id, modules_array[j], process_name, sizeof(process_name));
                 if (!strcmp(process_name, INJECTED_MODULE_NAME))
                     *previous_injection = modules_array[j];
+
+                // check for d3d11.dll match
+                if (!strcmp(process_name, "d3d11.dll")) {
+                    GetModuleFileNameExA(process_id, modules_array[j], process_name, sizeof(process_name));
+                    if (!calculateChecksum(process_name) == d3d11_checksum){
+                        cout << "[INIT] bad checksum for found d3d11.dll module.\n";
+                        return 0;
+                    }
+                }
+                // check for dxgi.dll match
+                else if (!strcmp(process_name, "dxgi.dll")) {
+                    GetModuleFileNameExA(process_id, modules_array[j], process_name, sizeof(process_name));
+                    if (!calculateChecksum(process_name) == dxgi_checksum){
+                        cout << "[INIT] bad checksum for found dxgi.dll module.\n";
+                        return 0;
+                    }
+                }
+                
+
             }
             return process_id;
         }
@@ -121,6 +156,8 @@ int main() {
             cout << "[INIT] could not find process.\n";
         }
 
+        cout << "[INIT] process found. checksums match.\n";
+
         // return if already injected
         if (previous_injection) {
             cout << "[INIT] dll already injected.\n";
@@ -131,7 +168,7 @@ int main() {
             cout << "[INIT] dll injection failed.\n";
             return -1;}
 
-        cout << "[INIT] dll injection failed.\n";
+        cout << "[INIT] dll injection succeeded.\n";
         return 0;
     }
 }

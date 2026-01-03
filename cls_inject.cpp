@@ -15,7 +15,7 @@ using namespace std;
 const char* MCC_PROC_STR = "mcc-win64-shipping.exe";
 const char* MCC_ALT_PROC_STR = "MCC-Win64-Shipping.exe";
 const char* INJECTED_MODULE_NAME = "cls_client.dll";
-const char* INJECTED_MODULE_PATH = "D:\\Projects\\VS\\CLS\\inject\\cls_client\\cls_client\\x64\\Debug\\cls_client.dll";
+const char* INJECTED_MODULE_PATH = "D:\\Projects\\VS\\CLS\\inject\\cls_inject\\x64\\Debug\\cls_client.dll";
 
 const unsigned long long d3d11_checksum = 0xa0a241b9b7d37785ull;
 const unsigned long long dxgi_checksum = 0xe709c1ef94866bc4ull;
